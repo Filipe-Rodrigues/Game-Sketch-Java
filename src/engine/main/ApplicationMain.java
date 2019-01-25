@@ -1,10 +1,12 @@
 package engine.main;
 
-import engine.core.ParticlesCore;
+import engine.application.PacmanApplication;
+import engine.graphics.LWJGLApplication;
 
 public class ApplicationMain {
 
     public static void main(String[] args) {
-        ParticlesCore core = new ParticlesCore(60000);
+        LWJGLApplication app = new PacmanApplication();
+        app.start();
     }
 }

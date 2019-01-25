@@ -5,7 +5,10 @@
  */
 package engine.core;
 
+import engine.graphics.LWJGLDrawable;
+import engine.graphics.LWJGLFigure;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -44,6 +47,8 @@ public class SharedComponents {
         try {
             writeLock.lock();
             components.add(component);
+            Collections.sort(components);
+            Collections.reverse(components);
         } finally {
             writeLock.unlock();
         }

@@ -1,6 +1,6 @@
 package engine.utils;
 
-public class Pair<L, R extends Comparable> implements Comparable<Pair<L, R>> {
+public class Pair<L, R> {
 
     private final L left;
     private final R right;
@@ -32,13 +32,10 @@ public class Pair<L, R extends Comparable> implements Comparable<Pair<L, R>> {
         return this.left.equals(pairo.getLeft())
                 && this.right.equals(pairo.getRight());
     }
-
+    
     @Override
-    public int compareTo(Pair<L, R> other) {
-        if (other != null) {
-            return this.right.compareTo(other.right);
-        }
-        return 1;
+    public String toString() {
+        return "(" + left.toString() + "; " + right.toString() + ")";
     }
 
 }

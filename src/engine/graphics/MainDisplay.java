@@ -1,4 +1,4 @@
-package engine.gui;
+package engine.graphics;
 
 import java.util.List;
 import org.lwjgl.LWJGLException;
@@ -8,42 +8,43 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 import static org.lwjgl.opengl.GL11.*;
-import engine.core.ParticlesCore;
 import engine.core.SharedComponents;
-import engine.core.LWJGLDrawable;
-import static engine.utils.ApplicationConstants.*;
-import engine.utils.Coordinate2D;
-import static engine.utils.Coordinate2D.*;
+import static engine.utils.Constants.*;
+import engine.utils.Coordinate2d;
+import java.util.LinkedList;
+import org.lwjgl.opengl.GL30;
 
 public class MainDisplay {
-
-    public static final int HUMAN_X_HUMAN_MODE = 0;
-    public static final int AI_DEMO_MODE = 1;
 
     public static boolean DRAW_COLLISION_BOUNDARIES = true;
 
     private final SharedComponents components;
-    private final Coordinate2D mouseNormalizedPosition;
-    private final ParticlesCore core;
+    private final LWJGLApplication app;
+    private final List<GUIControl> gc;
+    private final DisplayConfiguration dc;
+    private final CameraControl camera;
 
-    private int windowWid = 800;
-    private int windowHei = 600;
-    private int viewportWid;
-    private int viewportDispWid;
-    private int viewportHei;
-    private int viewportDispHei;
-    private long lastFrame;
-    private int fps;
-    private long lastFPS;
-    private boolean vsync;
-
-    public MainDisplay(ParticlesCore core) {
-        this.core = core;
-        this.components = core.getSharedComponents();
-        mouseNormalizedPosition = new Coordinate2D(0, 0);
+    public MainDisplay(ApplicationSetup setup) {
+        this.app = setup.application;
+        this.gc = new LinkedList<>();
+        this.dc = setup.displayConfiguration;
+        this.components = app.getSharedComponents();
+        this.camera = setup.camera;
     }
 
+    public void addGUIControl(GUIControl control) {
+        gc.add(control);
+        control.registerDisplayWindow(this);
+    }
+    
     public void start() {
+        setupDisplay();
+        prepareOpenGL();
+        loopGL();
+        terminate();
+    }
+
+    private void setupDisplay() {
         try {
             Display.setDisplayMode(new DisplayMode(800, 600));
             Display.create();
@@ -53,134 +54,60 @@ public class MainDisplay {
             e.printStackTrace();
             System.exit(0);
         }
+    }
 
+    private void prepareOpenGL() {
         initGL(); // init OpenGL
+        app.insertDrawableElements();
         getDelta(); // call once before loop to initialise lastFrame
-        lastFPS = getTime(); // call before loop to initialise fps timer
+        dc.lastFPS = getTime(); // call before loop to initialise dc.fps timer
+    }
 
+    private void loopGL() {
         while (!Display.isCloseRequested()) {
-            pollKeyboard();
-            pollMouse();
+            pollInput();
             renderGL();
 
             Display.update();
             updateWindowState();
-            Display.sync(60); // cap fps to 60fps
+            updateFPS();
+            Display.sync(60); // cap dc.fps to 60dc.fps
         }
+    }
 
+    private void terminate() {
         Display.destroy();
         components.stopRunning();
     }
 
+    private void pollInput() {
+        for (GUIControl control : gc) {
+            control.pollInput();
+        }
+    }
+    
     private void updateWindowState() {
         if (Display.wasResized()) {
             adjustViewport();
         }
     }
 
-    private void adjustViewport() {
-        windowWid = Display.getWidth();
-        windowHei = Display.getHeight();
-        if (windowWid > windowHei * FIELD_WIDTH / FIELD_HEIGHT) {
-            viewportDispWid = (windowWid - windowHei * FIELD_WIDTH / FIELD_HEIGHT) / 2;
-            viewportWid = windowHei * FIELD_WIDTH / FIELD_HEIGHT;
-            viewportDispHei = 0;
-            viewportHei = windowHei;
+    public void adjustViewport() {
+        dc.windowWid = Display.getWidth();
+        dc.windowHei = Display.getHeight();
+        if (dc.windowWid > dc.windowHei * FIELD_WIDTH / FIELD_HEIGHT) {
+            dc.viewportDispWid = (dc.windowWid - dc.windowHei * FIELD_WIDTH / FIELD_HEIGHT) / 2;
+            dc.viewportWid = dc.windowHei * FIELD_WIDTH / FIELD_HEIGHT;
+            dc.viewportDispHei = 0;
+            dc.viewportHei = dc.windowHei;
         } else {
-            viewportDispWid = 0;
-            viewportWid = windowWid;
-            viewportDispHei = (windowHei - windowWid * FIELD_HEIGHT / FIELD_WIDTH) / 2;
-            viewportHei = windowWid * FIELD_HEIGHT / FIELD_WIDTH;
+            dc.viewportDispWid = 0;
+            dc.viewportWid = dc.windowWid;
+            dc.viewportDispHei = (dc.windowHei - dc.windowWid * FIELD_HEIGHT / FIELD_WIDTH) / 2;
+            dc.viewportHei = dc.windowWid * FIELD_HEIGHT / FIELD_WIDTH;
         }
-        glScissor(viewportDispWid, viewportDispHei, viewportWid, viewportHei);
-        glViewport(viewportDispWid, viewportDispHei, viewportWid, viewportHei);
-    }
-
-    private void pollMouse() {
-        mouseNormalizedPosition.x = (double) (Mouse.getX() - viewportDispWid) / (double) viewportWid * FIELD_WIDTH;
-        mouseNormalizedPosition.y = (double) (Mouse.getY() - viewportDispHei) / (double) viewportHei * FIELD_HEIGHT;
-        while (Mouse.next()) {
-            if (Mouse.getEventButtonState()) {
-                evaluateMouseButtonPressed();
-            } else {
-                evaluateMouseButtonReleased();
-            }
-        }
-    }
-
-    private void evaluateMouseButtonPressed() {
-        if (Mouse.getEventButton() == 0) {
-
-        }
-    }
-
-    private void evaluateMouseButtonReleased() {
-        if (Mouse.getEventButton() == 0) {
-
-        } else if (Mouse.getEventButton() == 1) {
-
-        }
-    }
-
-    public void pollKeyboard() {
-        if (Keyboard.isKeyDown(Keyboard.KEY_LEFT)) {
-
-        }
-        if (Keyboard.isKeyDown(Keyboard.KEY_RIGHT)) {
-
-        }
-
-        if (Keyboard.isKeyDown(Keyboard.KEY_UP)) {
-
-        }
-        if (Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
-
-        }
-
-        while (Keyboard.next()) {
-            if (Keyboard.getEventKeyState()) {
-                switch (Keyboard.getEventKey()) {
-                    case Keyboard.KEY_F:
-                        if (Display.isFullscreen()) {
-                            setDisplayMode(FIELD_WIDTH, FIELD_HEIGHT, false);
-                            adjustViewport();
-                        } else {
-                            setDisplayMode(Display.getDesktopDisplayMode().getWidth(),
-                                    Display.getDesktopDisplayMode().getHeight(), true);
-                            adjustViewport();
-                        }
-                        break;
-                    case Keyboard.KEY_V:
-                        vsync = !vsync;
-                        Display.setVSyncEnabled(vsync);
-                        break;
-                    case Keyboard.KEY_SPACE:
-                        if (!core.wasInitialized()) {
-                            core.startPhysicsThread();
-                        } else {
-                            core.impulse();
-                        }
-                        break;
-                    case Keyboard.KEY_O:
-                        DRAW_COLLISION_BOUNDARIES = !DRAW_COLLISION_BOUNDARIES;
-                        break;
-                    case Keyboard.KEY_LCONTROL:
-
-                        break;
-                    default:
-                        break;
-                }
-            } else {
-                switch (Keyboard.getEventKey()) {
-                    case Keyboard.KEY_LCONTROL:
-
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-        updateFPS(); // pollKeyboard FPS Counter
+        glScissor(dc.viewportDispWid, dc.viewportDispHei, dc.viewportWid, dc.viewportHei);
+        glViewport(dc.viewportDispWid, dc.viewportDispHei, dc.viewportWid, dc.viewportHei);
     }
 
     /**
@@ -251,8 +178,8 @@ public class MainDisplay {
      */
     public int getDelta() {
         long time = getTime();
-        int delta = (int) (time - lastFrame);
-        lastFrame = time;
+        int delta = (int) (time - dc.lastFrame);
+        dc.lastFrame = time;
 
         return delta;
     }
@@ -270,15 +197,32 @@ public class MainDisplay {
      * Calculate the FPS and set it in the title bar
      */
     public void updateFPS() {
-        if (getTime() - lastFPS > 1000) {
-            Display.setTitle("FPS: " + fps);
-            fps = 0;
-            lastFPS += 1000;
+        if (getTime() - dc.lastFPS > 1000) {
+            Display.setTitle("FPS: " + dc.fps);
+            dc.fps = 0;
+            dc.lastFPS += 1000;
         }
-        fps++;
+        dc.fps++;
     }
 
     public void initGL() {
+        glEnable(GL_TEXTURE_2D);
+        glShadeModel(GL_SMOOTH);
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_LIGHTING);
+        glDisable(GL_TEXTURE_2D);
+
+        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        glClearDepth(1);
+
+        glEnable(GL_TEXTURE_2D);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glDisable(GL_BLEND);
+        glDisable(GL_TEXTURE_2D);
+
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
         glOrtho(0, FIELD_WIDTH, 0, FIELD_HEIGHT, 1, -1);
@@ -287,6 +231,7 @@ public class MainDisplay {
 
     public void renderGL() {
         clearScreen();
+        updateCamera();
         drawElements();
     }
 
@@ -294,10 +239,15 @@ public class MainDisplay {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
+    private void updateCamera() {
+        glLoadIdentity();
+        camera.lookThrough();
+    }
+
     private void drawElements() {
         List<LWJGLDrawable> drawingElements = components.getComponentList();
         for (LWJGLDrawable drawingElement : drawingElements) {
-            drawingElement.draw();
+            drawingElement.draw(camera);
         }
     }
 }
