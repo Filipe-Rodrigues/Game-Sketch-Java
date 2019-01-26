@@ -62,4 +62,8 @@ public class DisplayGrid extends LWJGLDrawable {
         activated = !activated;
     }
     
+    public void setGridActivated(boolean activated) {
+        this.activated = activated;
+    }
+    
 }

@@ -9,6 +9,8 @@ import engine.utils.Coordinate2i;
 import static engine.utils.DrawingUtils.*;
 import static java.lang.Math.*;
 import static engine.application.CellContent.*;
+import static engine.application.GameCommand.COUNT_SCORE;
+import engine.core.Command;
 import engine.utils.Pair;
 
 public final class PacmanPlayer extends Actor {
@@ -18,19 +20,24 @@ public final class PacmanPlayer extends Actor {
     public static final int FACING_UP = 2;
     public static final int FACING_DOWN = 3;
 
+    private final PacmanApplication app;
     private int facingDirection = FACING_RIGHT;
-    private double speedMult = 200;
+    private double speedMult = 250;
     private int spriteCycle = 0;
     private double lastCycleTime;
     private double spriteTimerMult = 35;
     private int spriteCycleIncrement = 2;
     private double sizeRatio = 14d / (double) GRID_RESOLUTION;
+    private int eatenPellets = 0;
 
-    public PacmanPlayer() {
+    public PacmanPlayer(PacmanApplication app) {
         super("pacman_sprite_56.png", 56, 56);
         lastCycleTime = System.nanoTime();
-        warpToPosition(new Coordinate2d(FIELD_WIDTH / 2, 32 * 9.5));
+        warpToPosition(new Coordinate2d(FIELD_WIDTH / 2, 32 * 26.5));
         movementBlocked = false;
+        loadSound("wak.wav", "0");
+        loadSound("kaw.wav", "1");
+        this.app = app;
     }
 
     private void updateSpriteCycle() {
@@ -58,9 +65,9 @@ public final class PacmanPlayer extends Actor {
         enableTransparency();
 
         if (spriteCycle == 0) {
-            spriteSheet.getSubImage(0, 0).draw((int) position.x - 28, (int) position.y + 28, 56, -56);
+            spriteSheet.getSubImage(0, 0).draw((int) position.x - 28, (int) position.y - 28, 56, 56);
         } else {
-            spriteSheet.getSubImage(spriteCycle, facingDirection).draw((int) position.x - 28, (int) position.y + 28, 56, -56);
+            spriteSheet.getSubImage(spriteCycle, facingDirection).draw((int) position.x - 28, (int) position.y - 28, 56, 56);
         }
         disableTransparency();
         disableTexture();
@@ -80,7 +87,7 @@ public final class PacmanPlayer extends Actor {
         Coordinate2d gridPosition = level.getGridPosition(position);
         switch (direction) {
             case FACING_UP:
-                gridPosition.y += 1;
+                gridPosition.y -= 1;
                 if (field[(int) floor(gridPosition.x)][(int) floor(gridPosition.y)].getLeft() != BLOCK) {
                     double checkValue = abs(gridPosition.x - floor(gridPosition.x));
                     //System.err.println("CHECK: " + checkValue);
@@ -90,7 +97,7 @@ public final class PacmanPlayer extends Actor {
                 }
                 return false;
             case FACING_DOWN:
-                gridPosition.y -= 1;
+                gridPosition.y += 1;
                 if (field[(int) floor(gridPosition.x)][(int) floor(gridPosition.y)].getLeft() != BLOCK) {
                     double checkValue = abs(gridPosition.x - floor(gridPosition.x));
                     //System.err.println("CHECK: " + checkValue);
@@ -152,6 +159,10 @@ public final class PacmanPlayer extends Actor {
     protected void update(Level level) {
         Pair<CellContent, Coordinate2i>[][] field = ((PacmanLevel) level).getFieldConfiguration();
         Coordinate2d gridPosition = level.getGridPosition(position);
+        if (gridPosition.x >= 0 && gridPosition.x < level.getFieldSize().x
+                && gridPosition.y >= 0 && gridPosition.y < level.getFieldSize().y) {
+            checkCurrentCell(level, field, gridPosition);
+        }
         switch (facingDirection) {
             case FACING_RIGHT:
                 if (!movementBlocked) {
@@ -187,22 +198,6 @@ public final class PacmanPlayer extends Actor {
                 break;
             case FACING_UP:
                 if (!movementBlocked) {
-                    position.y += speedMult * DELTA_IN_SECONDS;
-                    if (position.y > FIELD_HEIGHT + OFFSCREEN_LIMIT) {
-                        warpToPosition(new Coordinate2d(position.x, -OFFSCREEN_LIMIT));
-                    } else {
-                        gridPosition.x = floor(gridPosition.x);
-                        gridPosition.y = floor(gridPosition.y + sizeRatio);
-                        getNormalizedGridPosition(gridPosition, field);
-                        CellContent nextCellContent = field[(int) gridPosition.x][(int) gridPosition.y].getLeft();
-                        if (nextCellContent == BLOCK) {
-                            movementBlocked = true;
-                        }
-                    }
-                }
-                break;
-            case FACING_DOWN:
-                if (!movementBlocked) {
                     position.y -= speedMult * DELTA_IN_SECONDS;
                     if (position.y < -OFFSCREEN_LIMIT) {
                         warpToPosition(new Coordinate2d(position.x, FIELD_HEIGHT + OFFSCREEN_LIMIT));
@@ -217,6 +212,34 @@ public final class PacmanPlayer extends Actor {
                     }
                 }
                 break;
+            case FACING_DOWN:
+                if (!movementBlocked) {
+                    position.y += speedMult * DELTA_IN_SECONDS;
+                    if (position.y > FIELD_HEIGHT + OFFSCREEN_LIMIT) {
+                        warpToPosition(new Coordinate2d(position.x, -OFFSCREEN_LIMIT));
+                    } else {
+                        gridPosition.x = floor(gridPosition.x);
+                        gridPosition.y = floor(gridPosition.y + sizeRatio);
+                        getNormalizedGridPosition(gridPosition, field);
+                        CellContent nextCellContent = field[(int) gridPosition.x][(int) gridPosition.y].getLeft();
+                        if (nextCellContent == BLOCK) {
+                            movementBlocked = true;
+                        }
+                    }
+                }
+                break;
+        }
+    }
+
+    private void checkCurrentCell(Level level, Pair<CellContent, Coordinate2i>[][] field, Coordinate2d gridPosition) {
+        Coordinate2i pos = new Coordinate2i((int) gridPosition.x, (int) gridPosition.y);
+        if (field[pos.x][pos.y].getLeft() != EMPTY && field[pos.x][pos.y].getLeft() != BLOCK) {
+            app.sendCommand(new Command<>(COUNT_SCORE, field[pos.x][pos.y].getLeft().bonus));
+            if (field[pos.x][pos.y].getLeft() == PELLET) {
+                soundEffects.get((eatenPellets % 2) + "").play();
+                eatenPellets++;
+            }
+            level.setGridPosition(pos, new Pair<>(EMPTY, null));
         }
     }
 

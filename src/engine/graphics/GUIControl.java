@@ -25,9 +25,11 @@ public abstract class GUIControl extends LWJGLFigure {
         mouseNormalizedPosition = new Coordinate2d(0, 0);
     }
 
+    public abstract void initResources();
+    
     protected void normalizeMousePosition() {
         mouseNormalizedPosition.x = (double) (Mouse.getX() - dc.viewportDispWid) / (double) dc.viewportWid * FIELD_WIDTH;
-        mouseNormalizedPosition.y = (double) (Mouse.getY() - dc.viewportDispHei) / (double) dc.viewportHei * FIELD_HEIGHT;
+        mouseNormalizedPosition.y = FIELD_HEIGHT - (double) (Mouse.getY() - dc.viewportDispHei) / (double) dc.viewportHei * FIELD_HEIGHT;
     }
 
     public void registerDisplayWindow(MainDisplay display) {

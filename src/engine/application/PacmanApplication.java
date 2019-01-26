@@ -27,20 +27,20 @@ public class PacmanApplication extends LWJGLApplication {
 
     private GameState gameState;
     private GameState previousGameState;
-    private DisplayGrid debugGrid;
     private PacmanPlayer player;
     private PacmanLevel level;
     private boolean frozenState = true;
     private Queue<Command<GameCommand, Object>> commandQueue;
     private PacmanDebug debugger;
     private boolean changeDirectionRequired = false;
+    private int score;
 
     public PacmanApplication() {
-        debugGrid = new DisplayGrid(0.1f, 2);
         List<LWJGLDrawable> drawableElements = new ArrayList<>();
-        drawableElements.add(debugGrid);
-        sharedComponents = new SharedComponents(drawableElements);
         debugger = new PacmanDebug(new Coordinate2i(16, 3), true);
+        debugger.debugGrid = new DisplayGrid(0.1f, 2);
+        drawableElements.add(debugger.debugGrid);
+        sharedComponents = new SharedComponents(drawableElements);
         ApplicationSetup setup = new ApplicationSetup(this, new DisplayConfiguration(), new CameraControl(Coordinate2d.ORIGIN));
         HUD gc = new HUD(setup);
         gc.registerDebugger(debugger);
@@ -64,11 +64,11 @@ public class PacmanApplication extends LWJGLApplication {
                         previousGameState = gameState;
                         gameState = newGameState;
                     }
-                    debugger.debuggerActivated = gameState == DEBUG_MODE;
+                    debugger.setDebugModeActivated(gameState == DEBUG_MODE);
                     commandQueue.remove();
                     break;
                 case TOGGLE_GRID:
-                    debugGrid.toggleActivated();
+                    debugger.toggleGridState();
                     commandQueue.remove();
                     break;
                 case WALK:
@@ -90,11 +90,13 @@ public class PacmanApplication extends LWJGLApplication {
                     commandQueue.remove();
                     break;
                 case DEBUG_WRITE_FIELD_FILE:
-                    if (debugger.debuggerActivated) {
+                    if (debugger.isDebugActivated()) {
                         level.saveFieldConfiguration();
                     }
                     commandQueue.remove();
                     break;
+                case COUNT_SCORE:
+                    score += (Integer)command.getParameters();
                 default:
                     commandQueue.remove();
                     break;
@@ -118,20 +120,24 @@ public class PacmanApplication extends LWJGLApplication {
         } else {
             int cellCount;
             int incrementSignal;
+            boolean horizontal;
             if (debugger.selectedGridPosStart.x != debugger.selectedGridPosEnd.x) {
                 incrementSignal = debugger.selectedGridPosEnd.x - debugger.selectedGridPosStart.x;
+                horizontal = true;
             } else {
                 incrementSignal = debugger.selectedGridPosEnd.y - debugger.selectedGridPosStart.y;
+                horizontal = false;
             }
             cellCount = abs(incrementSignal);
             incrementSignal /= cellCount;
-            for (int i = 1; i <= cellCount; i++) {
+            cellCount = cellCount / 32;
+            for (int i = 1; i <= cellCount + 1; i++) {
                 level.setGridPosition(debugger.selectedGridPosStart.getScaled(32),
                         new Pair<>(content, tilePos));
-                if (debugger.selectedGridPosStart.x != debugger.selectedGridPosEnd.x) {
-                    debugger.selectedGridPosStart.x += incrementSignal;
+                if (horizontal) {
+                    debugger.selectedGridPosStart.x += incrementSignal * 32;
                 } else {
-                    debugger.selectedGridPosStart.y += incrementSignal;
+                    debugger.selectedGridPosStart.y += incrementSignal * 32;
                 }
             }
         }
@@ -141,7 +147,7 @@ public class PacmanApplication extends LWJGLApplication {
 
     @Override
     public void insertDrawableElements() {
-        player = new PacmanPlayer();
+        player = new PacmanPlayer(this);
         level = new PacmanLevel();
         level.registerDebugger(debugger);
         sharedComponents.addComponent(player);
@@ -176,6 +182,8 @@ public class PacmanApplication extends LWJGLApplication {
     public Object getAttribute(String attributeName) {
         if (attributeName.contains("GameState")) {
             return gameState;
+        } else if (attributeName.contains("Score")) {
+            return score;
         }
         return null;
     }
@@ -183,7 +191,7 @@ public class PacmanApplication extends LWJGLApplication {
     @Override
     public void gameLoop() {
         if (!commandQueue.isEmpty()) {
-            System.err.println("QUEUE: " + commandQueue);
+            //System.err.println("QUEUE: " + commandQueue);
         }
         if (gameState != INITIALIZING) {
             processQueue();

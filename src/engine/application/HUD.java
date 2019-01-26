@@ -13,14 +13,59 @@ import static engine.utils.DrawingUtils.*;
 import static engine.application.GameCommand.*;
 import static engine.application.GameState.*;
 import engine.utils.Coordinate2i;
+import java.awt.Font;
+import java.awt.FontFormatException;
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import org.newdawn.slick.Color;
+import org.newdawn.slick.SlickException;
+import org.newdawn.slick.UnicodeFont;
+import org.newdawn.slick.font.effects.ColorEffect;
 
 public class HUD extends GUIControl {
 
+    private static final int FONT_SMALL = 20;
+    private static final int FONT_MEDIUM = 40;
+    private static final int FONT_LARGE = 60;
+
     private PacmanDebug debugger;
+    private Map<Integer, UnicodeFont> pacFont;
 
     public HUD(ApplicationSetup setup) {
         super(setup);
+    }
+
+    @Override
+    public void initResources() {
+        initFonts();
+    }
+
+    private void initFonts() {
+        pacFont = new HashMap<>();
+        try {
+            File file = new File(FONTS_DIR + "joystix monospace.ttf");
+            Font font = Font.createFont(Font.TRUETYPE_FONT, file);
+            loadFont(font, FONT_SMALL);
+            loadFont(font, FONT_MEDIUM);
+            loadFont(font, FONT_LARGE);
+        } catch (FontFormatException ex) {
+            System.err.println("AUAHAU");
+        } catch (IOException ex) {
+            System.err.println("UHAUHAUAHUAHAU");
+        } catch (SlickException e) {
+            System.err.println("HAUAHUAHUA");
+        }
+    }
+
+    private void loadFont(Font font, int fontSize) throws SlickException {
+        font.deriveFont(fontSize + 0f);
+        UnicodeFont newUnicodeFont = new UnicodeFont(font, fontSize, false, false);
+        newUnicodeFont.getEffects().add(new ColorEffect(java.awt.Color.white));
+        newUnicodeFont.addAsciiGlyphs();
+        newUnicodeFont.loadGlyphs();
+        pacFont.put(fontSize, newUnicodeFont);
     }
 
     public void registerDebugger(PacmanDebug debugger) {
@@ -151,7 +196,13 @@ public class HUD extends GUIControl {
                 drawCellOutline(debugger.selectedGridPosStart, Color.red);
             }
             drawCellOutline(debugger.selectedGridPosEnd, new Color(1f, 0.5f, 0f, 1f));
+            
+            enableTexture();
+            pacFont.get(FONT_SMALL).drawString(0, 0, "Pos: " + debugger.selectedGridPosEnd.getScaled(32), Color.white);
+            disableTransparency();
+            disableTexture();
         }
+
     }
 
     private void drawCellOutline(Coordinate2i gridPos, Color color) {

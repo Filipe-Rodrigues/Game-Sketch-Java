@@ -37,13 +37,13 @@ public class PacmanLevel extends Level {
             for (int j = 0; j < fieldSize.y; j++) {
                 if (field[i][j].getRight() != null) {
                     tileset.getSubImage(field[i][j].getRight().x, field[i][j].getRight().y)
-                            .drawEmbedded(32 * i, 32 * (j + 1), 32, -32);
+                            .drawEmbedded(32 * i, 32 * j, 32, 32);
                 }
             }
         }
-        if (debugger.debuggerActivated) {
+        if (debugger.isDebugActivated()) {
             tileset.getSubImage(debugger.selectedTile.x, debugger.selectedTile.y)
-                    .drawEmbedded(debugger.selectedGridPosEnd.x, (debugger.selectedGridPosEnd.y + 32), 32, -32);
+                    .drawEmbedded(debugger.selectedGridPosEnd.x, debugger.selectedGridPosEnd.y, 32, 32);
         }
         tileset.endUse();
         disableTransparency();

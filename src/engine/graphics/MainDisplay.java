@@ -3,16 +3,12 @@ package engine.graphics;
 import java.util.List;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.Sys;
-import org.lwjgl.input.Keyboard;
-import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 import static org.lwjgl.opengl.GL11.*;
 import engine.core.SharedComponents;
 import static engine.utils.Constants.*;
-import engine.utils.Coordinate2d;
 import java.util.LinkedList;
-import org.lwjgl.opengl.GL30;
 
 public class MainDisplay {
 
@@ -59,6 +55,9 @@ public class MainDisplay {
     private void prepareOpenGL() {
         initGL(); // init OpenGL
         app.insertDrawableElements();
+        for (GUIControl gui : gc) {
+            gui.initResources();
+        }
         getDelta(); // call once before loop to initialise lastFrame
         dc.lastFPS = getTime(); // call before loop to initialise dc.fps timer
     }
@@ -225,7 +224,7 @@ public class MainDisplay {
 
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
-        glOrtho(0, FIELD_WIDTH, 0, FIELD_HEIGHT, 1, -1);
+        glOrtho(0, FIELD_WIDTH, FIELD_HEIGHT, 0, 1, -1);
         glMatrixMode(GL_MODELVIEW);
     }
 

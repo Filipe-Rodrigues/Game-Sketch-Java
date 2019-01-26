@@ -29,6 +29,10 @@ public abstract class Level extends LWJGLDrawable {
         }
     }
     
+    public Coordinate2i getFieldSize() {
+        return new Coordinate2i(fieldSize);
+    }
+    
     public abstract void update();
     
     public abstract Coordinate2d getGridPosition(Coordinate2d absolutePosition);

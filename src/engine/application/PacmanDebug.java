@@ -1,13 +1,15 @@
 package engine.application;
 
+import engine.graphics.DisplayGrid;
 import engine.utils.Coordinate2i;
 
 public class PacmanDebug {
 
+    public DisplayGrid debugGrid;
     public Coordinate2i selectedTile;
     public Coordinate2i selectedGridPosStart;
     public Coordinate2i selectedGridPosEnd;
-    public boolean debuggerActivated;
+    private boolean debuggerActivated;
     private final Coordinate2i tilesetDivisions;
     private int tile;
 
@@ -22,7 +24,6 @@ public class PacmanDebug {
 
     public void updateSelectedTile(int tileSelectionShift) {
         tile += tileSelectionShift;
-        System.err.println("TILE: " + tile);
         int tileNumber = tilesetDivisions.x * tilesetDivisions.y;
         if (tile >= tileNumber) {
             tile -= tileNumber;
@@ -31,6 +32,29 @@ public class PacmanDebug {
         }
         selectedTile.x = tile % tilesetDivisions.x;
         selectedTile.y = tile / tilesetDivisions.x;
+    }
+
+    public void toggleGridState() {
+        if (debuggerActivated) {
+            debugGrid.toggleActivated();
+        }
+    }
+
+    public void toggleDebugMode() {
+        if (debuggerActivated) {
+            setDebugModeActivated(false);
+        } else {
+            setDebugModeActivated(true);
+        }
+    }
+
+    public void setDebugModeActivated(boolean activated) {
+        debugGrid.setGridActivated(activated);
+        debuggerActivated = activated;
+    }
+
+    public boolean isDebugActivated() {
+        return debuggerActivated;
     }
 
 }

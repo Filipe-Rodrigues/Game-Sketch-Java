@@ -7,7 +7,9 @@ public enum GameCommand {
     WALK(15),
     DEBUG_INSERT_TILE(10),
     DEBUG_DELETE_TILE(10),
-    DEBUG_WRITE_FIELD_FILE(10);
+    DEBUG_WRITE_FIELD_FILE(10),
+    
+    COUNT_SCORE(10);
     
     public int priority;
     

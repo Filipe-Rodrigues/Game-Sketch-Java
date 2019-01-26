@@ -14,6 +14,8 @@ public class Constants {
     public static final String APPLICATION_DIR = System.getProperty("user.dir");
     public static final String SPRITES_DIR = APPLICATION_DIR + "/res/images/sprites/";
     public static final String CONFIG_DIR = APPLICATION_DIR + "/res/config/";
+    public static final String FONTS_DIR = APPLICATION_DIR + "/res/fonts/";
+    public static final String SFX_DIR = APPLICATION_DIR + "/res/sound/";
 
     public static final int CIRCLE_SEGMENTS = 16;
     public static final float LINE_WIDTH = 2.0f;
