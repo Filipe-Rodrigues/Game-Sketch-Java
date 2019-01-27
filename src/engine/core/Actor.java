@@ -37,7 +37,7 @@ public abstract class Actor extends LWJGLDrawable {
         }
     }
     
-    protected void loadSound(String soundName, String key) {
+    protected final void loadSound(String soundName, String key) {
         try {
             Sound sound = new Sound(SFX_DIR + soundName);
             soundEffects.put(key, sound);

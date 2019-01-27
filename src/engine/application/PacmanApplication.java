@@ -27,7 +27,7 @@ public class PacmanApplication extends LWJGLApplication {
 
     private GameState gameState;
     private GameState previousGameState;
-    private PacmanPlayer player;
+    private PacmanActor player;
     private PacmanLevel level;
     private boolean frozenState = true;
     private Queue<Command<GameCommand, Object>> commandQueue;

@@ -138,16 +138,16 @@ public class HUD extends GUIControl {
                     case Keyboard.KEY_TAB:
                         app.sendCommand(new Command<>(CHANGE_GAME_STATE, DEBUG_MODE));
                     case Keyboard.KEY_UP:
-                        app.sendCommand(new Command<>(WALK, PacmanPlayer.FACING_UP));
+                        app.sendCommand(new Command<>(WALK, PacmanActor.FACING_UP));
                         break;
                     case Keyboard.KEY_DOWN:
-                        app.sendCommand(new Command<>(WALK, PacmanPlayer.FACING_DOWN));
+                        app.sendCommand(new Command<>(WALK, PacmanActor.FACING_DOWN));
                         break;
                     case Keyboard.KEY_RIGHT:
-                        app.sendCommand(new Command<>(WALK, PacmanPlayer.FACING_RIGHT));
+                        app.sendCommand(new Command<>(WALK, PacmanActor.FACING_RIGHT));
                         break;
                     case Keyboard.KEY_LEFT:
-                        app.sendCommand(new Command<>(WALK, PacmanPlayer.FACING_LEFT));
+                        app.sendCommand(new Command<>(WALK, PacmanActor.FACING_LEFT));
                         break;
                     case Keyboard.KEY_RETURN:
                         app.sendCommand(new Command<>(TOGGLE_FREEZE_STATE, null));
@@ -190,21 +190,32 @@ public class HUD extends GUIControl {
     @Override
     public void draw(CameraControl camera) {
         if ((GameState) app.getAttribute("GameState") == DEBUG_MODE) {
-            enableTransparency();
-            glLineWidth(2f);
-            if (debugger.selectedGridPosStart.x > -1) {
-                drawCellOutline(debugger.selectedGridPosStart, Color.red);
-            }
-            drawCellOutline(debugger.selectedGridPosEnd, new Color(1f, 0.5f, 0f, 1f));
+            drawDebugHUD();
+        } else if ((GameState) app.getAttribute("GameState") == MAIN_MENU) {
+            drawMainMenuHUD();
+        } else if ((GameState) app.getAttribute("GameState") == INGAME) {
             
-            enableTexture();
-            pacFont.get(FONT_SMALL).drawString(0, 0, "Pos: " + debugger.selectedGridPosEnd.getScaled(32), Color.white);
-            disableTransparency();
-            disableTexture();
         }
-
     }
 
+    private void drawDebugHUD() {
+        enableTransparency();
+        glLineWidth(2f);
+        if (debugger.selectedGridPosStart.x > -1) {
+            drawCellOutline(debugger.selectedGridPosStart, Color.red);
+        }
+        drawCellOutline(debugger.selectedGridPosEnd, new Color(1f, 0.5f, 0f, 1f));
+
+        enableTexture();
+        pacFont.get(FONT_SMALL).drawString(0, 0, "Pos: " + debugger.selectedGridPosEnd.getScaled(32), Color.white);
+        disableTransparency();
+        disableTexture();
+    }
+
+    private void drawMainMenuHUD() {
+        
+    }
+    
     private void drawCellOutline(Coordinate2i gridPos, Color color) {
         glColor4f(color.r, color.g, color.b, color.a);
         glBegin(GL_LINE_LOOP);

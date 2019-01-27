@@ -20,6 +20,7 @@ public class PacmanLevel extends Level {
 
     private Pair<CellContent, Coordinate2i>[][] field;
     private PacmanDebug debugger;
+    private int powerPelletBlinkCount = 0;
 
     public PacmanLevel() {
         super(new Coordinate2i(28, 36), "tileset_b_32.png", 32, 32);
@@ -36,8 +37,24 @@ public class PacmanLevel extends Level {
         for (int i = 0; i < fieldSize.x; i++) {
             for (int j = 0; j < fieldSize.y; j++) {
                 if (field[i][j].getRight() != null) {
-                    tileset.getSubImage(field[i][j].getRight().x, field[i][j].getRight().y)
+                    if (field[i][j].getLeft() != POWER_PELLET) {
+                        tileset.getSubImage(field[i][j].getRight().x, field[i][j].getRight().y)
                             .drawEmbedded(32 * i, 32 * j, 32, 32);
+                    } else {
+                        if (powerPelletBlinkCount % 40 < 20) {
+                            tileset.getSubImage(field[i][j].getRight().x, field[i][j].getRight().y)
+                                    .drawEmbedded(32 * i, 32 * j, 32, 32);
+                        } else {
+                            tileset.endUse();
+                            tileset.getSubImage(field[i][j].getRight().x, field[i][j].getRight().y)
+                                    .drawFlash(32 * i, 32 * j, 32, 32);
+                            tileset.startUse();
+                        }
+                        powerPelletBlinkCount++;
+                        if (powerPelletBlinkCount > 40) {
+                            powerPelletBlinkCount = 0;
+                        }
+                    }
                 }
             }
         }
@@ -65,7 +82,7 @@ public class PacmanLevel extends Level {
     
     private void loadDrawingCoords() {
         try {
-            File f = new File(CONFIG_DIR + "layout");
+            File f = new File(CONFIG_DIR + "levelLayout");
             FileReader fr = new FileReader(f);
             try (BufferedReader br = new BufferedReader(fr)) {
                 String line;
