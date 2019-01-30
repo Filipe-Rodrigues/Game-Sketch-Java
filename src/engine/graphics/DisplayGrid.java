@@ -16,7 +16,7 @@ public class DisplayGrid extends LWJGLDrawable {
     private List<Line> grid;
     private float alpha;
     private float lineWidth;
-    private boolean activated = true;
+    private boolean activated = false;
 
     public DisplayGrid(float alpha, float lineWidth) {
         super(Integer.MAX_VALUE);

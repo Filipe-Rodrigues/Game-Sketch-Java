@@ -130,6 +130,10 @@ public final class Coordinate2d {
         y -= point.y;
     }
     
+    public Coordinate2i toCoordinate2i() {
+        return new Coordinate2i((int) x, (int) y);
+    }
+    
     @Override
     public String toString() {
         return "(" + x + ", " + y + ")";

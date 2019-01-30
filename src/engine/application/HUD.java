@@ -194,7 +194,7 @@ public class HUD extends GUIControl {
         } else if ((GameState) app.getAttribute("GameState") == MAIN_MENU) {
             drawMainMenuHUD();
         } else if ((GameState) app.getAttribute("GameState") == INGAME) {
-            
+            drawIngameHUD();
         }
     }
 
@@ -206,16 +206,17 @@ public class HUD extends GUIControl {
         }
         drawCellOutline(debugger.selectedGridPosEnd, new Color(1f, 0.5f, 0f, 1f));
 
-        enableTexture();
-        pacFont.get(FONT_SMALL).drawString(0, 0, "Pos: " + debugger.selectedGridPosEnd.getScaled(32), Color.white);
-        disableTransparency();
-        disableTexture();
+        drawString(FONT_SMALL, 0, 0, "Pos: " + debugger.selectedGridPosEnd.getScaled(32), Color.white);
     }
 
     private void drawMainMenuHUD() {
-        
+
     }
-    
+
+    private void drawIngameHUD() {
+        drawString(FONT_SMALL, 0, 0, "Score: " + app.getAttribute("Score"), Color.white);
+    }
+
     private void drawCellOutline(Coordinate2i gridPos, Color color) {
         glColor4f(color.r, color.g, color.b, color.a);
         glBegin(GL_LINE_LOOP);
@@ -226,6 +227,14 @@ public class HUD extends GUIControl {
             glVertex2i(gridPos.x, gridPos.y + GRID_RESOLUTION);
         }
         glEnd();
+    }
+
+    private void drawString(int font, float x, float y, String message, Color color) {
+        enableTexture();
+        enableTransparency();
+        pacFont.get(font).drawString(0, 0, message, color);
+        disableTransparency();
+        disableTexture();
     }
 
 }

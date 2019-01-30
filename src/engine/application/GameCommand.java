@@ -9,7 +9,9 @@ public enum GameCommand {
     DEBUG_DELETE_TILE(10),
     DEBUG_WRITE_FIELD_FILE(10),
     
-    COUNT_SCORE(10);
+    COUNT_SCORE(10),
+    CHANGE_GHOST_MODE(6),
+    KILL_PLAYER(5);
     
     public int priority;
     

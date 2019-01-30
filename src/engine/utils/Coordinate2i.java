@@ -30,6 +30,11 @@ public class Coordinate2i {
         return new Coordinate2i(x / factor, y / factor);
     }
     
+    public void copyCoordinates(Coordinate2i another) {
+        this.x = another.x;
+        this.y = another.y;
+    }
+    
     @Override
     public String toString() {
         return "[" + x + ", " + y + "]";

@@ -15,29 +15,34 @@ import java.util.ArrayList;
 import java.util.List;
 import static engine.application.GameCommand.*;
 import static engine.application.GameState.*;
-import engine.utils.Constants;
-import static engine.utils.Constants.GRID_RESOLUTION;
+import static engine.application.PacmanGhost.*;
+import static engine.utils.Constants.*;
 import engine.utils.Coordinate2i;
 import engine.utils.Pair;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import static java.lang.Math.*;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
 
 public class PacmanApplication extends LWJGLApplication {
 
     private GameState gameState;
     private GameState previousGameState;
-    private PacmanActor player;
+    private PacmanPlayer player;
+    private Map<Integer, PacmanGhost> ghosts;
     private PacmanLevel level;
     private boolean frozenState = true;
     private Queue<Command<GameCommand, Object>> commandQueue;
+    private List<Coordinate2i> collectedPellets;
     private PacmanDebug debugger;
     private boolean changeDirectionRequired = false;
     private int score;
 
     public PacmanApplication() {
         List<LWJGLDrawable> drawableElements = new ArrayList<>();
-        debugger = new PacmanDebug(new Coordinate2i(16, 3), true);
+        debugger = new PacmanDebug(new Coordinate2i(16, 3), false);
         debugger.debugGrid = new DisplayGrid(0.1f, 2);
         drawableElements.add(debugger.debugGrid);
         sharedComponents = new SharedComponents(drawableElements);
@@ -48,6 +53,7 @@ public class PacmanApplication extends LWJGLApplication {
         display = new MainDisplay(setup);
         display.addGUIControl(gc);
         commandQueue = new PriorityQueue<>(new GameCommandComparator());
+        collectedPellets = new LinkedList<>();
         gameState = INITIALIZING;
     }
 
@@ -96,14 +102,28 @@ public class PacmanApplication extends LWJGLApplication {
                     commandQueue.remove();
                     break;
                 case COUNT_SCORE:
-                    score += (Integer)command.getParameters();
+                    countScore((Pair<CellContent, Coordinate2i>)command.getParameters());
+                    commandQueue.remove();
+                    break;
+                case CHANGE_GHOST_MODE:
+                    
+                    commandQueue.remove();
+                    break;
                 default:
+                    
                     commandQueue.remove();
                     break;
             }
         }
     }
 
+    private void countScore(Pair<CellContent, Coordinate2i> cell) {
+        if (!collectedPellets.contains(cell.getRight())) {
+            score += (Integer)cell.getLeft().bonus;
+            collectedPellets.add(cell.getRight());
+        }
+    }
+    
     private void chainRedefineCells(boolean erase) {
         CellContent content;
         Coordinate2i tilePos;
@@ -150,9 +170,22 @@ public class PacmanApplication extends LWJGLApplication {
         player = new PacmanPlayer(this);
         level = new PacmanLevel();
         level.registerDebugger(debugger);
+        ghosts = new HashMap<>();
+        PacmanGhost blinky = new PacmanGhost(this, PacmanGhost.BLINKY, new Coordinate2d(14 * 32, 14.5 * 32), new Coordinate2i(26, 0), false);
+        PacmanGhost pinky = new PacmanGhost(this, PacmanGhost.PINKY, new Coordinate2d(12 * 32, 17.5 * 32), new Coordinate2i(0, 0), false);
+        PacmanGhost inky = new PacmanGhost(this, PacmanGhost.INKY, new Coordinate2d(14 * 32, 17.5 * 32), new Coordinate2i(26, 36), false);
+        PacmanGhost clyde = new PacmanGhost(this, PacmanGhost.CLYDE, new Coordinate2d(16 * 32, 17.5 * 32), new Coordinate2i(0, 36), false);
+        ghosts.put(BLINKY, blinky);
+        ghosts.put(PINKY, pinky);
+        ghosts.put(INKY, inky);
+        ghosts.put(CLYDE, clyde);
         sharedComponents.addComponent(player);
+        sharedComponents.addComponent(blinky);
+        sharedComponents.addComponent(pinky);
+        sharedComponents.addComponent(inky);
+        sharedComponents.addComponent(clyde);
         sharedComponents.addComponent(level);
-        gameState = DEBUG_MODE;
+        gameState = INGAME;
     }
 
     @Override
@@ -184,6 +217,14 @@ public class PacmanApplication extends LWJGLApplication {
             return gameState;
         } else if (attributeName.contains("Score")) {
             return score;
+        } else if (attributeName.contains("PlayerPosition")) {
+            return player.getFieldPosition(level);
+        } else if (attributeName.contains("PlayerDirection")) {
+            return player.getActorDirection();
+        } else if (attributeName.contains("FieldGridDimension")) {
+            return level.getFieldSize();
+        } else if (attributeName.contains("BlinkyPosition")) {
+            return ghosts.get(BLINKY).getFieldPosition(level);
         }
         return null;
     }

@@ -14,6 +14,8 @@ import org.newdawn.slick.SpriteSheet;
 public abstract class Actor extends LWJGLDrawable {
 
     protected SpriteSheet spriteSheet;
+    protected int tileWidth;
+    protected int tileHeight;
     protected Coordinate2d position;
     protected boolean movementBlocked;
     protected Map<String, Sound> soundEffects;
@@ -27,6 +29,8 @@ public abstract class Actor extends LWJGLDrawable {
         initSpriteSheet(spriteFileName, tw, th);
         position = new Coordinate2d(0, 0);
         soundEffects = new HashMap<>();
+        tileWidth = tw;
+        tileHeight = th;
     }
 
     private void initSpriteSheet(String spriteFileName, int tw, int th) {
@@ -47,6 +51,10 @@ public abstract class Actor extends LWJGLDrawable {
     
     public void toggleMovementBlock() {
         movementBlocked = !movementBlocked;
+    }
+    
+    public Coordinate2d getPosition() {
+        return position;
     }
     
     protected abstract void update(Level level);
