@@ -2,10 +2,11 @@ package engine.application;
 
 import engine.graphics.DisplayGrid;
 import engine.utils.Coordinate2i;
+import java.io.Serializable;
 
 public class PacmanDebug {
 
-    public DisplayGrid debugGrid;
+    public transient DisplayGrid debugGrid;
     public Coordinate2i selectedTile;
     public Coordinate2i selectedGridPosStart;
     public Coordinate2i selectedGridPosEnd;

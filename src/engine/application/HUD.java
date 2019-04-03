@@ -83,7 +83,7 @@ public class HUD extends GUIControl {
     }
 
     private void evaluateMouseButtonPressed() {
-        if (Mouse.getEventButton() == 0 || Mouse.getEventButton() == 1) {
+        if (Mouse.getEventButton() == 0 || Mouse.getEventButton() == 1 || Mouse.getEventButton() == 2) {
             debugger.selectedGridPosStart.update(mouseNormalizedPosition, GRID_RESOLUTION, GRID_RESOLUTION);
         }
     }
@@ -96,6 +96,10 @@ public class HUD extends GUIControl {
         } else if (Mouse.getEventButton() == 1) {
             if ((GameState) app.getAttribute("GameState") == DEBUG_MODE) {
                 app.sendCommand(new Command<>(DEBUG_DELETE_TILE, null));
+            }
+        } else if (Mouse.getEventButton() == 2) {
+            if ((GameState) app.getAttribute("GameState") == DEBUG_MODE) {
+                app.sendCommand(new Command<>(DEBUG_INSERT_AI_MOD, null));
             }
         }
     }
@@ -137,17 +141,18 @@ public class HUD extends GUIControl {
                     case Keyboard.KEY_APOSTROPHE:
                     case Keyboard.KEY_TAB:
                         app.sendCommand(new Command<>(CHANGE_GAME_STATE, DEBUG_MODE));
+                        break;
                     case Keyboard.KEY_UP:
-                        app.sendCommand(new Command<>(WALK, PacmanActor.FACING_UP));
+                        app.sendCommand(new Command<>(WALK, PacmanActor.UP));
                         break;
                     case Keyboard.KEY_DOWN:
-                        app.sendCommand(new Command<>(WALK, PacmanActor.FACING_DOWN));
+                        app.sendCommand(new Command<>(WALK, PacmanActor.DOWN));
                         break;
                     case Keyboard.KEY_RIGHT:
-                        app.sendCommand(new Command<>(WALK, PacmanActor.FACING_RIGHT));
+                        app.sendCommand(new Command<>(WALK, PacmanActor.RIGHT));
                         break;
                     case Keyboard.KEY_LEFT:
-                        app.sendCommand(new Command<>(WALK, PacmanActor.FACING_LEFT));
+                        app.sendCommand(new Command<>(WALK, PacmanActor.LEFT));
                         break;
                     case Keyboard.KEY_RETURN:
                         app.sendCommand(new Command<>(TOGGLE_FREEZE_STATE, null));
@@ -206,7 +211,7 @@ public class HUD extends GUIControl {
         }
         drawCellOutline(debugger.selectedGridPosEnd, new Color(1f, 0.5f, 0f, 1f));
 
-        drawString(FONT_SMALL, 0, 0, "Pos: " + debugger.selectedGridPosEnd.getScaled(32), Color.white);
+        drawString(FONT_SMALL, 0, 0, "Pos: " + debugger.selectedGridPosEnd.getDividedByScalar(32), Color.white);
     }
 
     private void drawMainMenuHUD() {

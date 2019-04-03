@@ -1,5 +1,6 @@
 package engine.application;
 
+import engine.application.ai.PacmanGhost;
 import static engine.application.CellContent.EMPTY;
 import engine.core.Command;
 import engine.core.SharedComponents;
@@ -15,8 +16,13 @@ import java.util.ArrayList;
 import java.util.List;
 import static engine.application.GameCommand.*;
 import static engine.application.GameState.*;
-import static engine.application.PacmanGhost.*;
-import static engine.utils.Constants.*;
+import engine.application.ai.Blinky;
+import engine.application.ai.Clyde;
+import static engine.application.ai.GhostAIMode.*;
+import engine.application.ai.Inky;
+import static engine.application.ai.PacmanGhost.*;
+import engine.application.ai.Pinky;
+import engine.core.EventQueue;
 import engine.utils.Coordinate2i;
 import engine.utils.Pair;
 import java.util.PriorityQueue;
@@ -34,6 +40,7 @@ public class PacmanApplication extends LWJGLApplication {
     private Map<Integer, PacmanGhost> ghosts;
     private PacmanLevel level;
     private boolean frozenState = true;
+    private EventQueue<Command<GameCommand, Object>> autoTriggeredEvents;
     private Queue<Command<GameCommand, Object>> commandQueue;
     private List<Coordinate2i> collectedPellets;
     private PacmanDebug debugger;
@@ -52,6 +59,7 @@ public class PacmanApplication extends LWJGLApplication {
         sharedComponents.addComponent(gc);
         display = new MainDisplay(setup);
         display.addGUIControl(gc);
+        autoTriggeredEvents = new EventQueue<>();
         commandQueue = new PriorityQueue<>(new GameCommandComparator());
         collectedPellets = new LinkedList<>();
         gameState = INITIALIZING;
@@ -78,7 +86,7 @@ public class PacmanApplication extends LWJGLApplication {
                     commandQueue.remove();
                     break;
                 case WALK:
-                    if (player.changeWalkDirection((Integer) command.getParameters(), level)) {
+                    if (player.changeWalkDirection((Coordinate2i) command.getParameters(), level)) {
                         commandQueue.remove();
                         changeDirectionRequired = false;
                     }
@@ -86,6 +94,7 @@ public class PacmanApplication extends LWJGLApplication {
                 case TOGGLE_FREEZE_STATE:
                     frozenState = !frozenState;
                     commandQueue.remove();
+                    level.changeSoundLoop("NORMAL", 1f);
                     break;
                 case DEBUG_INSERT_TILE:
                     chainRedefineCells(false);
@@ -101,16 +110,28 @@ public class PacmanApplication extends LWJGLApplication {
                     }
                     commandQueue.remove();
                     break;
+                case DEBUG_INSERT_AI_MOD:
+
+                    break;
                 case COUNT_SCORE:
-                    countScore((Pair<CellContent, Coordinate2i>)command.getParameters());
+                    countScore((Pair<CellContent, Coordinate2i>) command.getParameters());
                     commandQueue.remove();
                     break;
-                case CHANGE_GHOST_MODE:
-                    
+                case FRIGHTEN_ALL_GHOSTS:
+                    for (PacmanGhost ghost : ghosts.values()) {
+                        ghost.changeMode(FLEE);
+                    }
+                    autoTriggeredEvents.enqueueEvent(new Command<>(UNFRIGHTEN_ALL_GHOSTS, null), 6000);
+                    commandQueue.remove();
+                    break;
+                case UNFRIGHTEN_ALL_GHOSTS:
+                    for (PacmanGhost ghost : ghosts.values()) {
+                        ghost.changeMode(PURSUE);
+                    }
                     commandQueue.remove();
                     break;
                 default:
-                    
+
                     commandQueue.remove();
                     break;
             }
@@ -119,8 +140,15 @@ public class PacmanApplication extends LWJGLApplication {
 
     private void countScore(Pair<CellContent, Coordinate2i> cell) {
         if (!collectedPellets.contains(cell.getRight())) {
-            score += (Integer)cell.getLeft().bonus;
+            score += (Integer) cell.getLeft().bonus;
             collectedPellets.add(cell.getRight());
+        }
+    }
+
+    private void processAutoTriggeredEvents() {
+        Command<GameCommand, Object> triggeredCommand = autoTriggeredEvents.tick();
+        if (triggeredCommand != null) {
+            commandQueue.add(triggeredCommand);
         }
     }
     
@@ -135,7 +163,7 @@ public class PacmanApplication extends LWJGLApplication {
             tilePos = null;
         }
         if (debugger.selectedGridPosStart.equals(debugger.selectedGridPosEnd)) {
-            level.setGridPosition(debugger.selectedGridPosStart.getScaled(32),
+            level.setGridPosition(debugger.selectedGridPosStart.getDividedByScalar(32),
                     new Pair<>(content, tilePos));
         } else {
             int cellCount;
@@ -152,7 +180,7 @@ public class PacmanApplication extends LWJGLApplication {
             incrementSignal /= cellCount;
             cellCount = cellCount / 32;
             for (int i = 1; i <= cellCount + 1; i++) {
-                level.setGridPosition(debugger.selectedGridPosStart.getScaled(32),
+                level.setGridPosition(debugger.selectedGridPosStart.getDividedByScalar(32),
                         new Pair<>(content, tilePos));
                 if (horizontal) {
                     debugger.selectedGridPosStart.x += incrementSignal * 32;
@@ -168,13 +196,13 @@ public class PacmanApplication extends LWJGLApplication {
     @Override
     public void insertDrawableElements() {
         player = new PacmanPlayer(this);
-        level = new PacmanLevel();
+        level = new PacmanLevel(0.5);
         level.registerDebugger(debugger);
         ghosts = new HashMap<>();
-        PacmanGhost blinky = new PacmanGhost(this, PacmanGhost.BLINKY, new Coordinate2d(14 * 32, 14.5 * 32), new Coordinate2i(26, 0), false);
-        PacmanGhost pinky = new PacmanGhost(this, PacmanGhost.PINKY, new Coordinate2d(12 * 32, 17.5 * 32), new Coordinate2i(0, 0), false);
-        PacmanGhost inky = new PacmanGhost(this, PacmanGhost.INKY, new Coordinate2d(14 * 32, 17.5 * 32), new Coordinate2i(26, 36), false);
-        PacmanGhost clyde = new PacmanGhost(this, PacmanGhost.CLYDE, new Coordinate2d(16 * 32, 17.5 * 32), new Coordinate2i(0, 36), false);
+        PacmanGhost blinky = new Blinky(this);
+        PacmanGhost pinky = new Pinky(this);
+        PacmanGhost inky = new Inky(this);
+        PacmanGhost clyde = new Clyde(this);
         ghosts.put(BLINKY, blinky);
         ghosts.put(PINKY, pinky);
         ghosts.put(INKY, inky);
@@ -185,6 +213,10 @@ public class PacmanApplication extends LWJGLApplication {
         sharedComponents.addComponent(inky);
         sharedComponents.addComponent(clyde);
         sharedComponents.addComponent(level);
+        level.registerActor(blinky);
+        level.registerActor(pinky);
+        level.registerActor(inky);
+        level.registerActor(clyde);
         gameState = INGAME;
     }
 
@@ -225,6 +257,14 @@ public class PacmanApplication extends LWJGLApplication {
             return level.getFieldSize();
         } else if (attributeName.contains("BlinkyPosition")) {
             return ghosts.get(BLINKY).getFieldPosition(level);
+        } else if (attributeName.contains("PinkyPosition")) {
+            return ghosts.get(PINKY).getFieldPosition(level);
+        } else if (attributeName.contains("InkyPosition")) {
+            return ghosts.get(INKY).getFieldPosition(level);
+        } else if (attributeName.contains("ClydePosition")) {
+            return ghosts.get(CLYDE).getFieldPosition(level);
+        } else if (attributeName.contains("CurrentLevel")) {
+            return level;
         }
         return null;
     }
@@ -236,8 +276,12 @@ public class PacmanApplication extends LWJGLApplication {
         }
         if (gameState != INITIALIZING) {
             processQueue();
+            processAutoTriggeredEvents();
             if (!frozenState) {
                 player.update(level);
+                for (PacmanGhost ghost : ghosts.values()) {
+                    ghost.update(level);
+                }
             }
         }
     }

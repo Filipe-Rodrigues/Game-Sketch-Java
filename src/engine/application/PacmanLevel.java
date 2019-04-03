@@ -1,11 +1,14 @@
 package engine.application;
 
+import engine.application.ai.PacmanGhost;
 import engine.core.Level;
 import engine.graphics.CameraControl;
 import engine.utils.Coordinate2i;
 import static engine.utils.DrawingUtils.*;
 import static engine.utils.Constants.*;
 import static engine.application.CellContent.*;
+import engine.application.ai.GhostAIModifier;
+import static engine.application.ai.GhostAIModifier.*;
 import engine.utils.Coordinate2d;
 import engine.utils.Pair;
 import java.io.BufferedReader;
@@ -15,15 +18,23 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class PacmanLevel extends Level {
-
+    
     private Pair<CellContent, Coordinate2i>[][] field;
+    private List<PacmanActor> actors;
     private PacmanDebug debugger;
     private int powerPelletBlinkCount = 0;
+    private String lastPlayedLoop;
 
-    public PacmanLevel() {
+    public PacmanLevel(double tunnelAIPenaulty) {
         super(new Coordinate2i(28, 36), "tileset_b_32.png", 32, 32);
+        loadSound("ghost.wav", "NORMAL");
+        lastPlayedLoop = "NONE";
         initializeField();
         loadDrawingCoords();
     }
@@ -61,6 +72,15 @@ public class PacmanLevel extends Level {
         if (debugger.isDebugActivated()) {
             tileset.getSubImage(debugger.selectedTile.x, debugger.selectedTile.y)
                     .drawEmbedded(debugger.selectedGridPosEnd.x, debugger.selectedGridPosEnd.y, 32, 32);
+            for (PacmanActor actor : actors) {
+                if (actor instanceof PacmanGhost) {
+                    PacmanGhost ghost = (PacmanGhost) actor;
+                    
+                    tileset.getSubImage(6 + ghost.getGhostColor(), 2)
+                            .drawEmbedded(32 * ghost.getCurrentFieldTarget().x,
+                                    32 * ghost.getCurrentFieldTarget().y, 32, 32);
+                }
+            }
         }
         tileset.endUse();
         disableTransparency();
@@ -74,6 +94,11 @@ public class PacmanLevel extends Level {
                 field[i][j] = new Pair<>(EMPTY, null);
             }
         }
+        actors = new ArrayList<>();
+    }
+    
+    public void registerActor(PacmanActor actor) {
+        actors.add(actor);
     }
 
     public void registerDebugger(PacmanDebug debugger) {
@@ -132,13 +157,29 @@ public class PacmanLevel extends Level {
         }
     }
     
+    public void changeSoundLoop(String newLoop, float pitch) {
+        if (!lastPlayedLoop.equals("NONE")) {
+            loopingAmbiance.get(lastPlayedLoop).stop();
+        }
+        loopingAmbiance.get(newLoop).loop(pitch, 1.0f);
+        lastPlayedLoop = newLoop;
+    }
+    
     @Override
     public void update() {
     }
 
     @Override
-    public Coordinate2d getGridPosition(Coordinate2d absolutePosition) {
+    public Coordinate2d getGridPosition2d(Coordinate2d absolutePosition) {
         Coordinate2d gridPosition = new Coordinate2d(absolutePosition.getScaled(1d / (double) GRID_RESOLUTION));
+
+        return gridPosition;
+    }
+    
+    @Override
+    public Coordinate2i getGridPosition2i(Coordinate2d absolutePosition) {
+        Coordinate2i gridPosition = new Coordinate2i((int) absolutePosition.x / GRID_RESOLUTION,
+                (int) absolutePosition.y / GRID_RESOLUTION);
 
         return gridPosition;
     }

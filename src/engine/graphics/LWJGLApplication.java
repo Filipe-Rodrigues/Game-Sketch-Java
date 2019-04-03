@@ -19,7 +19,9 @@ public abstract class LWJGLApplication {
             double diff;
             while (sharedComponents.isStillRunning()) {
                 ti = System.nanoTime();
+                //sharedComponents.getWritingLock();
                 gameLoop();
+                //sharedComponents.unlockWriting();
                 tf = System.nanoTime();
                 diff = tf - ti;
                 if (diff < DELTA) {

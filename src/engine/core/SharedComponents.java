@@ -6,7 +6,6 @@
 package engine.core;
 
 import engine.graphics.LWJGLDrawable;
-import engine.graphics.LWJGLFigure;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -32,6 +31,22 @@ public class SharedComponents {
         stillRunning = true;
         readLock = lock.readLock();
         writeLock = lock.writeLock();
+    }
+
+    public void getReadingLock() {
+        readLock.lock();
+    }
+    
+    public void unlockReading() {
+        readLock.unlock();
+    }
+
+    public void getWritingLock() {
+        writeLock.lock();
+    }
+    
+    public void unlockWriting() {
+        writeLock.unlock();
     }
 
     public List<LWJGLDrawable> getComponentList() {
@@ -80,4 +95,5 @@ public class SharedComponents {
             readLock.unlock();
         }
     }
+
 }

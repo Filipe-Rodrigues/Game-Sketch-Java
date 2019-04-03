@@ -13,6 +13,7 @@ import org.newdawn.slick.SpriteSheet;
 
 public abstract class Actor extends LWJGLDrawable {
 
+    protected Level level;
     protected SpriteSheet spriteSheet;
     protected int tileWidth;
     protected int tileHeight;

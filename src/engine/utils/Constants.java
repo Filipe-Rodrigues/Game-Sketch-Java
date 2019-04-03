@@ -26,6 +26,7 @@ public class Constants {
     public static final int FIELD_HEIGHT = 1152;
     public static final int OFFSCREEN_LIMIT = 64;
     public static final int GRID_RESOLUTION = 32;
+    public static final int CELL_SUBDIVISION = 8;
 
     public static final double DELTA = 1E6;
     public static final double DELTA_IN_SECONDS = DELTA * 1E-9;

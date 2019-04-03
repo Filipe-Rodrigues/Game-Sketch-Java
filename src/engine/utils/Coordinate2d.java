@@ -125,13 +125,30 @@ public final class Coordinate2d {
         y += point.y;
     }
     
+    public void sum(Coordinate2i point) {
+        x += point.x;
+        y += point.y;
+    }
+    
     public void sub(Coordinate2d point) {
         x -= point.x;
         y -= point.y;
     }
     
     public Coordinate2i toCoordinate2i() {
-        return new Coordinate2i((int) x, (int) y);
+        return new Coordinate2i((int) floor(x), (int) floor(y));
+    }
+    
+    public void warpCoordinates(Coordinate2d limit1, Coordinate2d limit2) {
+        double xMin = min(limit1.x, limit2.x);
+        double yMin = min(limit1.y, limit2.y);
+        double xMax = max(limit1.x, limit2.x);
+        double yMax = max(limit1.y, limit2.y);
+        
+        if (x < xMin) x = xMax;
+        if (x > xMax) x = xMin;
+        if (y < yMin) y = yMax;
+        if (y > yMax) y = yMin;
     }
     
     @Override
